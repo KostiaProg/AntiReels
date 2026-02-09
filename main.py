@@ -23,6 +23,7 @@ def camera() -> cv2.VideoCapture:
             break
     
     webcam.release()
+    skeleton.release()
     cv2.destroyAllWindows()
 
 def camera_logic(frame: cv2.typing.MatLikem, skeleton: cv2.VideoCapture, counter: int):

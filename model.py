@@ -1,6 +1,4 @@
 from ultralytics import YOLO
-from ultralytics.utils.plotting import plot_results
-
 import os
 from torch.cuda import is_available
 
@@ -20,17 +18,14 @@ def train(data_path: str = DATA_SETTINGS_PATH, train_path: str = TRAIN_PATH, val
     device = 0 if is_available() else "cpu"
 
     model.train(data=data_path, epochs=50, imgsz=512, batch=20, device=device, name=model_name)
-    plot_results(train_path)
-
     model.val()
-    plot_results(val_path)
 
     format = "engine" if is_available() else "onnx"
     model.export(format=format)
     # model.save()
 
 # if phone detected - true
-def get_phones(img, model_path: str = MODEL_PATH, model_full_name: str = MODEL_FULL_NAME) -> bool:
+def get_phones(img, model_full_name: str = MODEL_FULL_NAME) -> bool:
     # pretrain model if didn't do it before
     if not os.path.exists(model_full_name):
         train()
