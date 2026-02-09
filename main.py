@@ -26,6 +26,10 @@ def camera() -> cv2.VideoCapture:
     cv2.destroyAllWindows()
 
 def camera_logic(frame: cv2.typing.MatLikem, skeleton: cv2.VideoCapture, counter: int):
+    frame = cv2.flip(frame, 1)
+    cv2.imshow("Webcam", frame)
+
+    # are there any phones in the frame
     if get_phones(frame):
         # get video speed
         original_fps = skeleton.get(cv2.CAP_PROP_FPS)
@@ -55,11 +59,9 @@ def camera_logic(frame: cv2.typing.MatLikem, skeleton: cv2.VideoCapture, counter
         key = cv2.waitKey(speed_up_delay) & 0xFF
         if key == ord('q'):
             return 1
-
     else:
         counter = 1
 
-    cv2.imshow("Webcam", frame)
     return counter
 
 camera()
