@@ -1,2 +1,6 @@
 data_yolo26/
 models/
+__pycache__/
+python_vlc-3.0.21203.dist-info/
+
+vlc.py

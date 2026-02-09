@@ -1,20 +1,40 @@
 import cv2
+import vlc
 from model import get_phones
 
-def camera() -> cv2.VideoCapture:
-    # setup
-    webcam = cv2.VideoCapture(0) # 0 default
-    skeleton = cv2.VideoCapture("skeleton.mp4")
+finished = False
+def on_video_ended(event, mediaplayer):
+    global finished
+    finished = True
 
+def camera() -> cv2.VideoCapture:
+    # ask user does he want to see webcam
+    ans = ''
+    while ans != 'y' and ans != 'n':
+        ans = input("Do you want to see webcam (y/n): ").lower()
+    show_webcam = True if ans == 'y' else False
+
+    # setup webcam
+    webcam = cv2.VideoCapture(0) # 0 default
     if not webcam.isOpened():
         print("Couldn't find a camera")
         return None
 
-    counter = 1
+    # setup skeleton video
+    instance = vlc.Instance()
+    mediaplayer = instance.media_player_new()
+    mediaplayer.set_media(vlc.Media("else/skeleton.mp4"))
+    speed = 0.5
+
+    # when video ends close it
+    event_manager = mediaplayer.event_manager()
+    event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, on_video_ended, mediaplayer)
+
+    # webcam loop
     while True:
         ret, frame = webcam.read()
         if ret: # true if frame captured correctly
-            counter = camera_logic(frame, skeleton, counter)
+            speed = camera_logic(frame, mediaplayer, speed, show_webcam)
                     
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -22,47 +42,48 @@ def camera() -> cv2.VideoCapture:
             print("Couldn't capture a frame")
             break
     
+    # close all
     webcam.release()
-    skeleton.release()
+    mediaplayer.release()
+    instance.release()
     cv2.destroyAllWindows()
 
-def camera_logic(frame: cv2.typing.MatLikem, skeleton: cv2.VideoCapture, counter: int):
-    frame = cv2.flip(frame, 1)
-    cv2.imshow("Webcam", frame)
+def camera_logic(frame: cv2.typing.MatLike, mediaplayer, speed: int, show_webcam: bool = True):
+    # reset video
+    global finished
+    if finished:
+        finished = False
+        mediaplayer.stop()
 
     # are there any phones in the frame
     if get_phones(frame):
-        # get video speed
-        original_fps = skeleton.get(cv2.CAP_PROP_FPS)
-        if original_fps == 0:
-            original_fps = 30 # Default to 30
-        speed_up_delay = int((1000 / original_fps) / counter) # increase it
+        # replay with higher speed
+        if not mediaplayer.is_playing():
+            speed += 0.5
+            mediaplayer.set_rate(speed)
+            mediaplayer.play()
 
-        # show skeleton
-        ret, skeleton_frame = skeleton.read()
+        # add text to webcam
+        if show_webcam:
+            TEXT = "REELS SCROLLING DETECTED"
+            RED = (0, 0, 255)
+            FONT = cv2.FONT_HERSHEY_COMPLEX
+            FONT_SCALE = 1
+            THICKNESS = 1
 
-        if not ret: # video has over, increase speed
-            counter += 1
-        
-        # add text
-        RED = (0, 0, 255)
-        FONT =  cv2.FONT_HERSHEY_COMPLEX
-        FONT_SCALE = 1.5
-        THICKNESS = 3
-        TEXT = "REELS SCROLLING DETECTED"
-        ready_size, _ = cv2.getTextSize(TEXT, FONT, FONT_SCALE, THICKNESS)
-        cv2.addText(skeleton_frame, TEXT, ((skeleton_frame.shape[1] - ready_size[0]) // 2, 50), FONT, FONT_SCALE, RED, THICKNESS, cv2.LINE_AA)
-
-        # actual skeleton
-        cv2.imshow(skeleton_frame)
-
-        # increasing speed + exit key
-        key = cv2.waitKey(speed_up_delay) & 0xFF
-        if key == ord('q'):
-            return 1
+            ready_size, _ = cv2.getTextSize(TEXT, FONT, FONT_SCALE, THICKNESS)
+            position = ((frame.shape[1] - ready_size[0]) // 2, 50)
+            cv2.putText(frame, TEXT, position, FONT, FONT_SCALE, RED, THICKNESS, cv2.LINE_AA)
     else:
-        counter = 1
+        # stop video and reset speed
+        speed = 0.5
+        if mediaplayer.is_playing():
+            mediaplayer.stop()
 
-    return counter
+    # show webcam
+    if show_webcam:
+        frame = cv2.flip(frame, 1)
+        cv2.imshow("Webcam", frame)
+    return speed
 
 camera()
