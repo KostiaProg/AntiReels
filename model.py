@@ -30,8 +30,8 @@ def get_phones(img, model_full_name: str = MODEL_FULL_NAME) -> bool:
     model = YOLO(model_full_name)
     img_results = model(img)
 
+    # look for phone
     for box in img_results[0].boxes:
         if model.names[int(box.cls[0])] == "phone":
             return True
     return False
-    # return True if len(img_results[0]) > 0 else False
