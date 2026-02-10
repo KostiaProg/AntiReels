@@ -49,6 +49,8 @@ def camera() -> cv2.VideoCapture:
     cv2.destroyAllWindows()
 
 def camera_logic(frame: cv2.typing.MatLike, mediaplayer, speed: int, show_webcam: bool = True):
+    frame = cv2.flip(frame, 1)
+
     # reset video
     global finished
     if finished:
@@ -82,8 +84,8 @@ def camera_logic(frame: cv2.typing.MatLike, mediaplayer, speed: int, show_webcam
 
     # show webcam
     if show_webcam:
-        frame = cv2.flip(frame, 1)
         cv2.imshow("Webcam", frame)
+
     return speed
 
 camera()
