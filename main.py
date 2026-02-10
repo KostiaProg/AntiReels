@@ -3,7 +3,7 @@ import vlc
 from model import get_phones
 
 finished = False
-def on_video_ended(event, mediaplayer):
+def on_video_ended(event):
     global finished
     finished = True
 
@@ -28,7 +28,7 @@ def camera() -> cv2.VideoCapture:
 
     # when video ends close it
     event_manager = mediaplayer.event_manager()
-    event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, on_video_ended, mediaplayer)
+    event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, on_video_ended)
 
     # webcam loop
     while True:
